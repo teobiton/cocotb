@@ -827,4 +827,17 @@ def get_ext():
         )
         ext.append(nvc_vhpi_ext)
 
+    #
+    # DSIM
+    #
+    if os.name == "posix":
+        logger.info("Compiling libraries for DSIM")
+        dsim_vpi_ext = _get_vpi_lib_ext(
+            include_dirs=include_dirs,
+            share_lib_dir=share_lib_dir,
+            sim_define="DSIM",
+            extra_lib_dir=["/home/teo/metrics-ca/dsim/20240422.0.0/lib"],
+        )
+        ext.append(dsim_vpi_ext)
+
     return ext

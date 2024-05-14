@@ -1,0 +1,42 @@
+# Copyright cocotb contributors
+# Licensed under the Revised BSD License, see LICENSE for details.
+# SPDX-License-Identifier: BSD-3-Clause
+
+include $(shell cocotb-config --makefiles)/Makefile.inc
+
+CMD_BIN := dsim
+
+ifdef DSIM_BIN_DIR
+    CMD := $(shell :; command -v $(DSIM_BIN_DIR)/$(CMD_BIN) 2>/dev/null)
+else
+    # auto-detect bin dir from system path
+    CMD := $(shell :; command -v $(CMD_BIN) 2>/dev/null)
+endif
+
+ifeq (, $(CMD))
+    $(error Unable to locate command >$(CMD_BIN)<)
+endif
+
+ifeq ($(WAVES), 1)
+    WAVE_ARG := -waves file.vcd
+else
+    WAVE_ARG :=
+endif
+
+ifdef TOPLEVEL
+  TOPMODULE_ARG := -top $(TOPLEVEL)
+else
+  TOPMODULE_ARG :=
+endif
+
+COMP_ARGS = +acc+rwc -timescale $(COCOTB_HDL_TIMEUNIT)/$(COCOTB_HDL_TIMEPRECISION)
+DSIM_ARGS = -pli_lib $(shell cocotb-config --lib-name-path vpi dsim)
+
+$(COCOTB_RESULTS_FILE): $(VHDL_SOURCES) $(VERILOG_SOURCES) $(CUSTOM_COMPILE_DEPS) $(CUSTOM_SIM_DEPS) | $(SIM_BUILD)
+	$(RM) $(COCOTB_RESULTS_FILE)
+	MODULE=$(MODULE) TESTCASE=$(TESTCASE) COCOTB_TEST_FILTER=$(COCOTB_TEST_FILTER) TOPLEVEL=$(TOPLEVEL) \
+	GPI_EXTRA=$(GPI_EXTRA) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+	$(SIM_CMD_PREFIX) $(CMD) $(COMP_ARGS) $(DSIM_ARGS) $(WAVE_ARG) $(TOPMODULE_ARG) $(EXTRA_ARGS) $(VHDL_SOURCES) $(VERILOG_SOURCES)
+
+clean::
+	$(RM) -r $(SIM_BUILD)
